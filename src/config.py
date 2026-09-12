@@ -45,6 +45,7 @@ class MonitoringConfig:
 class CategorizationConfig:
     adult_hostlist: str
     games_hostlist: str
+    known_sites_hostlist: str
     suspicious_extensions: list[str]
 
 
@@ -108,6 +109,9 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> AppConfig:
         categorization=CategorizationConfig(
             adult_hostlist=parser.get("categorization", "adult_hostlist", fallback=""),
             games_hostlist=parser.get("categorization", "games_hostlist", fallback=""),
+            known_sites_hostlist=parser.get(
+                "categorization", "known_sites_hostlist", fallback="data/known_sites.txt"
+            ),
             suspicious_extensions=_split_list(
                 parser.get("categorization", "suspicious_extensions", fallback=".apk, .exe, .zip")
             ),

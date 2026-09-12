@@ -1,0 +1,91 @@
+# =============================================================================
+#  known_sites.txt  —  Lista de dominios CONOCIDOS/BENIGNOS -> categoria "normal".
+#
+#  Es la unica lista curada a mano del proyecto (para el corte normal vs
+#  desconocido). Las listas de adulto/juegos siguen siendo publicas (spec §3.2).
+#
+#  Un dominio que NO aparezca aqui (ni en adulto/juegos ni en las heuristicas)
+#  se marca como "desconocido" para revisar. Por eso conviene ir agregando aqui
+#  los dominios legitimos que aparezcan en los reportes.
+#
+#  Formato (una entrada por linea; # = comentario):
+#    ejemplo.com     -> coincide con ejemplo.com y cualquier subdominio (a.ejemplo.com)
+#    .edu.pe         -> con punto inicial = REGLA DE SUFIJO: cualquier dominio que
+#                       termine en .edu.pe (colegios/universidades de Peru)
+#  Tambien acepta formato hosts (0.0.0.0 dominio), igual que las otras listas.
+# =============================================================================
+
+# --- Google ---
+google.com
+.google.com
+youtube.com
+.youtube.com
+.googleusercontent.com
+.googleapis.com
+.gstatic.com
+gmail.com
+drive.google.com
+docs.google.com
+classroom.google.com
+meet.google.com
+
+# --- Microsoft ---
+microsoft.com
+.microsoft.com
+.microsoftonline.com
+outlook.com
+hotmail.com
+live.com
+msn.com
+office.com
+.office.com
+.sharepoint.com
+onedrive.com
+bing.com
+xbox.com
+
+# --- Apple ---
+apple.com
+.apple.com
+icloud.com
+
+# --- Correo / mensajeria ---
+proton.me
+protonmail.com
+whatsapp.com
+.whatsapp.com
+web.whatsapp.com
+telegram.org
+web.telegram.org
+
+# --- Educacion / clases / referencia ---
+zoom.us
+.zoom.us
+khanacademy.org
+duolingo.com
+wikipedia.org
+.wikipedia.org
+wikimedia.org
+.wikimedia.org
+scholar.google.com
+canva.com
+.canva.com
+
+# --- Peru: gobierno y educacion (reglas de sufijo) ---
+.gob.pe
+.edu.pe
+
+# --- Peru: bancos y servicios ---
+viabcp.com
+bcp.com.pe
+bbva.pe
+interbank.pe
+scotiabank.com.pe
+sunat.gob.pe
+
+# --- Entretenimiento comun (no peligroso; el padre puede reclasificar) ---
+netflix.com
+.netflix.com
+spotify.com
+.spotify.com
+disneyplus.com

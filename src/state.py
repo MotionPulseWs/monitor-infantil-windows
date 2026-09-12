@@ -83,6 +83,8 @@ class StateStore:
     # TODO: fetch_* por rango de fechas (una jornada o varias pendientes).
     # TODO: pending_report_dates() -> list[str]  (fechas con datos aun no enviadas).
     # TODO: mark_report_sent(report_date).
+    # Nota: la correlacion descarga->borrado se arma en report/correlate.py cruzando
+    #       downloads y recycle_deletions por nombre de archivo (basename).
 
     def close(self) -> None:
         self.conn.close()

@@ -41,6 +41,17 @@ $computer = $env:COMPUTERNAME
 $targetPrincipal = "$computer\$($target.Name)"
 Write-Host ("Cuenta elegida: {0}  (SID: {1})" -f $targetPrincipal, $target.SID) -ForegroundColor Green
 
+# 1b) Listar los navegadores/perfiles que se van a monitorear para esa cuenta (spec §3.2).
+#     Usa el SID para resolver el perfil del menor (no el del admin/SYSTEM que corre esto).
+Write-Host "`nNavegadores detectados para esa cuenta:" -ForegroundColor Yellow
+$detect = Join-Path $PSScriptRoot "..\tools\detect_browsers.py"
+try {
+    & python $detect --sid $target.SID
+} catch {
+    Write-Host "  (no se pudo ejecutar la deteccion: $_ )" -ForegroundColor DarkYellow
+}
+Write-Host ""
+
 # 2) Definir la tarea: trigger al logon del menor, ejecucion como SYSTEM (spec §8, punto 3)
 $action = New-ScheduledTaskAction -Execute $PythonwPath -Argument ('"{0}"' -f $ScriptPath)
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $targetPrincipal

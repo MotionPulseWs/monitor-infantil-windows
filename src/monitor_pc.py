@@ -24,16 +24,24 @@ if __package__ in (None, ""):
 
 from src.config import load_config
 from src.state import StateStore
+from src.winprofile import resolve_user_paths as _resolve_sid
 
 
-def resolve_user_paths(target_user: str, target_sid: str) -> dict[str, Path]:
-    """Resuelve %LOCALAPPDATA% y $Recycle.Bin\\<SID> del menor (spec §8, punto 2).
+def resolve_user_paths(target_user: str, target_sid: str) -> dict[str, str]:
+    """Resuelve %LOCALAPPDATA%, %APPDATA% y $Recycle.Bin\\<SID> del menor (spec §8).
 
-    Necesario porque el proceso puede correr como SYSTEM, no como el menor, asi
-    que no basta con las variables de entorno del proceso actual.
+    Necesario porque el proceso corre como SYSTEM, no como el menor, asi que no
+    basta con las variables de entorno del proceso actual. Ver src/winprofile.py.
     """
-    # TODO: construir rutas a partir de target_user / target_sid.
-    raise NotImplementedError
+    if not target_sid:
+        raise ValueError(
+            "Falta [monitoring].target_sid en config.ini. Corre el instalador "
+            "(install/install_task.ps1) para elegir la cuenta del menor y su SID."
+        )
+    env = _resolve_sid(target_sid)
+    if env is None:
+        raise RuntimeError(f"No se pudo resolver el perfil del SID {target_sid} (usuario {target_user}).")
+    return env
 
 
 def run() -> None:

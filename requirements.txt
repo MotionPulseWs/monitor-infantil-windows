@@ -1,0 +1,8 @@
+# Dependencias de terceros (spec §10). El resto es stdlib:
+# sqlite3, smtplib, email, zoneinfo, configparser.
+psutil>=5.9
+watchdog>=3.0
+openpyxl>=3.1
+
+# Solo para empaquetar como .exe sin depender de Python instalado (opcional, spec §8):
+# pyinstaller>=6.0

@@ -1,0 +1,39 @@
+# --- Datos sensibles y capturados: NUNCA subir al repo (spec §9) ---
+# Configuración real con credenciales SMTP
+config.ini
+
+# Reportes generados (contienen actividad del menor)
+/reports/
+*.html
+*.xlsx
+
+# Estado local y bases de datos del script
+*.db
+*.sqlite
+*.sqlite3
+state/
+*.json.state
+
+# Logs
+*.log
+logs/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+*.spec
+
+# --- SO / editor ---
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+*.swp

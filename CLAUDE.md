@@ -40,7 +40,8 @@ Collection modules (spec §3):
 
 Report/delivery (spec §5–§7):
 - One HTML table per module. **Every** categorized row carries a rounded **"pill" badge** (all four categories, `normal` and `desconocido` included), rendered via `render_pill()` from [src/categories.py](src/categories.py) — badge the item, don't just highlight the row. Rows also get a soft category-colored background (`row_background()`); `normal` is the only category with no highlight. Two event flags reuse the same pill system: `sospechoso` (suspicious `.apk`/`.exe`/`.zip` download) and `papelera_vaciada`. Pill styles are **inline** (email clients strip `<style>`).
-- Optional `.xlsx` via `openpyxl`, one sheet per module.
+- **Navigation is grouped by registrable domain** by default ([src/report/aggregate.py](src/report/aggregate.py) `group_visits_by_domain` + `registrable_domain()` in domain_categories) — one row per site with visit count + time range, showing the **max-severity** category in the group. Collapses hundreds of per-URL rows into a compact email (~93% smaller on real data: 91KB→6KB) — critical for a daily email over a year. `registrable_domain` knows multi-label suffixes (`edu.pe`, `gob.pe`, …) so `ucsp.edu.pe` is not merged into `edu.pe`. Per-URL detail is deferred to the optional Excel attachment (`tools/test_report.py --detailed` shows the ungrouped view).
+- Optional `.xlsx` via `openpyxl`, one sheet per module (also the place for full per-URL detail).
 - **One email/day** via user-configured generic SMTP (config file, never hardcoded). If the PC was off for days, combine pending days into **a single email with per-date sections**. No immediate alerts for now — but keep the code organized so an immediate-alert mode can be added later without a redesign.
 
 ## Non-obvious technical decisions (read before touching the relevant module)

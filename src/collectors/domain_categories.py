@@ -29,6 +29,34 @@ def _normalize(domain: str) -> str:
     return d
 
 
+# Sufijos publicos de dos etiquetas mas comunes (para no agrupar 'ucsp.edu.pe' y
+# 'otra.edu.pe' como si fueran el mismo sitio). No es la PSL completa, pero cubre
+# los casos frecuentes (sobre todo .pe). Ampliable.
+_MULTI_LABEL_SUFFIXES = {
+    "edu.pe", "gob.pe", "com.pe", "org.pe", "net.pe", "nom.pe", "mil.pe", "sld.pe",
+    "co.uk", "org.uk", "ac.uk", "gov.uk",
+    "com.mx", "org.mx", "gob.mx", "com.ar", "com.br", "com.co", "com.ec", "com.bo",
+    "com.ve", "com.py", "com.uy", "com.cl", "co.jp", "com.au", "co.in", "com.tr",
+    "com.sg", "com.hk", "com.tw",
+}
+
+
+def registrable_domain(host: str) -> str:
+    """Dominio 'registrable' (eTLD+1) de un host, para agrupar en el reporte.
+
+    github.com                  -> github.com
+    docs.google.com             -> google.com
+    campus.ucsp.edu.pe          -> ucsp.edu.pe   (reconoce 'edu.pe' como sufijo)
+    """
+    host = _normalize(host)
+    parts = [p for p in host.split(".") if p]
+    if len(parts) <= 2:
+        return host
+    if ".".join(parts[-2:]) in _MULTI_LABEL_SUFFIXES:
+        return ".".join(parts[-3:])
+    return ".".join(parts[-2:])
+
+
 def _matches(domain: str, entries: set[str]) -> bool:
     """True si el dominio coincide con alguna entrada de la lista.
 

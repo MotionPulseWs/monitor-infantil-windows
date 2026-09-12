@@ -28,6 +28,7 @@ from src.categories import render_pill  # noqa: E402
 from src.collectors.browser_history import BrowserHistoryCollector  # noqa: E402
 from src.collectors.domain_categories import DomainCategorizer  # noqa: E402
 from src.collectors.processes import ProcessCollector, accumulate_time_per_app  # noqa: E402
+from src.report.aggregate import group_visits_by_domain  # noqa: E402
 from src.report.html_report import page, render_row, render_table  # noqa: E402
 from src.state import StateStore  # noqa: E402
 from src.utils.timeutil import format_duration, format_local, now_utc  # noqa: E402
@@ -48,6 +49,8 @@ def _human_size(n: int) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Reporte con datos reales de esta PC.")
     ap.add_argument("--days", type=int, default=1, help="cuantos dias hacia atras (def. 1)")
+    ap.add_argument("--detailed", action="store_true",
+                    help="navegacion por URL en vez de agrupada por dominio")
     ap.add_argument("--no-open", action="store_true", help="no abrir el navegador al terminar")
     args = ap.parse_args()
     since = now_utc() - timedelta(days=args.days)
@@ -78,18 +81,39 @@ def main() -> None:
     # 4) Construir HTML
     app_rows = "".join(render_row([a, format_duration(sec)]) for a, sec in apps.items())
 
-    visits.sort(key=lambda v: (severity(v["category"]), v["visit_ts_utc"]), reverse=True)
-    shown = visits[:MAX_VISIT_ROWS]
-    nav_rows = "".join(
-        render_row(
-            [format_local(v["visit_ts_utc"], fmt="%d/%m %H:%M"),
-             f'<span class="wrap">{v["domain"]}</span>',
-             f'<span class="wrap">{(v["title"] or "")[:80]}</span>',
-             v["browser"], render_pill(v["category"])],
-            v["category"],
+    if args.detailed:
+        visits.sort(key=lambda v: (severity(v["category"]), v["visit_ts_utc"]), reverse=True)
+        shown = visits[:MAX_VISIT_ROWS]
+        nav_rows = "".join(
+            render_row(
+                [format_local(v["visit_ts_utc"], fmt="%d/%m %H:%M"),
+                 f'<span class="wrap">{v["domain"]}</span>',
+                 f'<span class="wrap">{(v["title"] or "")[:80]}</span>',
+                 v["browser"], render_pill(v["category"])],
+                v["category"],
+            )
+            for v in shown
         )
-        for v in shown
-    )
+        nav_title = f"Navegacion web — detalle ({len(visits)} visitas"
+        nav_title += f", mostrando {len(shown)})" if len(shown) < len(visits) else ")"
+        nav_table = render_table(nav_title, ["Hora", "Dominio", "Titulo", "Navegador", "Categoria"], nav_rows)
+    else:
+        groups = group_visits_by_domain(visits)
+        nav_rows = "".join(
+            render_row(
+                [f'<span class="wrap">{g["domain"]}</span>',
+                 str(g["count"]),
+                 f'{format_local(g["first"], fmt="%d/%m %H:%M")} → {format_local(g["last"], fmt="%H:%M")}',
+                 ", ".join(sorted(g["browsers"])),
+                 render_pill(g["category"])],
+                g["category"],
+            )
+            for g in groups
+        )
+        nav_table = render_table(
+            f"Navegacion web — {len(groups)} dominios ({len(visits)} visitas)",
+            ["Dominio", "Visitas", "Rango horario", "Navegador", "Categoria"], nav_rows,
+        )
 
     dl_rows = "".join(
         render_row(
@@ -103,14 +127,11 @@ def main() -> None:
         for d in downloads
     )
 
-    nav_title = f"Navegacion web ({len(visits)} visitas"
-    nav_title += f", mostrando {len(shown)})" if len(shown) < len(visits) else ")"
-
     body = (
         "<h1>Reporte de actividad — DATOS REALES (prueba local)</h1>"
         f"<p><small>Ultimos {args.days} dia/s · horas en America/Lima</small></p>"
         + render_table("Apps abiertas ahora (tiempo abierto)", ["Aplicacion", "Tiempo"], app_rows)
-        + render_table(nav_title, ["Hora", "Dominio", "Titulo", "Navegador", "Categoria"], nav_rows)
+        + nav_table
         + render_table(f"Descargas ({len(downloads)})",
                        ["Hora", "Archivo", "Origen", "Tamano", "Estado", ""], dl_rows)
     )

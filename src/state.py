@@ -10,6 +10,7 @@ La base vive en la ruta [storage].state_db y NO se versiona (ver .gitignore).
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 SCHEMA = """
@@ -76,8 +77,38 @@ class StateStore:
         self.conn.commit()
 
     # --- Escritura (cada collector llama a lo suyo) ---
-    # TODO: add_process_event, add_web_visit, add_download,
-    #       add_recycle_deletion, add_recycle_empty_event.
+    def add_process_event(self, name: str, pid: int, event: str, ts_utc: datetime) -> None:
+        """Registra un evento de proceso ('open' | 'close') con hora UTC (spec §3.1)."""
+        self.conn.execute(
+            "INSERT INTO process_events (name, pid, event, ts_utc) VALUES (?, ?, ?, ?)",
+            (name, pid, event, ts_utc.isoformat()),
+        )
+        self.conn.commit()
+
+    # TODO: add_web_visit, add_download, add_recycle_deletion, add_recycle_empty_event.
+
+    # --- Lectura ---
+    def fetch_process_events(self, since_utc: datetime | None = None) -> list[dict]:
+        """Devuelve los eventos de proceso (opcionalmente desde since_utc), ordenados."""
+        if since_utc is not None:
+            cur = self.conn.execute(
+                "SELECT name, pid, event, ts_utc FROM process_events "
+                "WHERE ts_utc >= ? ORDER BY ts_utc",
+                (since_utc.isoformat(),),
+            )
+        else:
+            cur = self.conn.execute(
+                "SELECT name, pid, event, ts_utc FROM process_events ORDER BY ts_utc"
+            )
+        return [
+            {
+                "name": r["name"],
+                "pid": r["pid"],
+                "event": r["event"],
+                "ts_utc": datetime.fromisoformat(r["ts_utc"]),
+            }
+            for r in cur.fetchall()
+        ]
 
     # --- Lectura para el reporte ---
     # TODO: fetch_* por rango de fechas (una jornada o varias pendientes).

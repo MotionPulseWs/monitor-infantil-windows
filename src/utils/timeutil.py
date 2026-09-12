@@ -30,6 +30,18 @@ def format_local(dt: datetime, tz: ZoneInfo = LIMA, fmt: str = "%Y-%m-%d %H:%M:%
     return to_display(dt, tz).strftime(fmt)
 
 
+def format_duration(seconds: float) -> str:
+    """Segundos -> texto legible para el reporte: '3h 05min', '40min', '25s'."""
+    total = int(round(seconds))
+    hours, rem = divmod(total, 3600)
+    minutes, secs = divmod(rem, 60)
+    if hours:
+        return f"{hours}h {minutes:02d}min"
+    if minutes:
+        return f"{minutes}min"
+    return f"{secs}s"
+
+
 def filetime_to_utc(filetime: int) -> datetime:
     """Convierte un Windows FILETIME (100-ns desde 1601-01-01) a datetime UTC.
 

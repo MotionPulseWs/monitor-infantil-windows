@@ -85,7 +85,30 @@ class StateStore:
         )
         self.conn.commit()
 
-    # TODO: add_web_visit, add_download, add_recycle_deletion, add_recycle_empty_event.
+    def add_web_visit(self, url: str, title: str | None, domain: str, category: str,
+                      visit_ts_utc: datetime, browser: str) -> None:
+        """Registra una visita web categorizada (spec §3.2)."""
+        self.conn.execute(
+            "INSERT INTO web_visits (url, title, domain, category, visit_ts_utc, browser) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (url, title, domain, category, visit_ts_utc.isoformat(), browser),
+        )
+        self.conn.commit()
+
+    def add_download(self, file_name: str, target_path: str, source_url: str,
+                     size_bytes: int, state: str, suspicious: bool,
+                     start_ts_utc: datetime | None, end_ts_utc: datetime | None) -> None:
+        """Registra una descarga (spec §3.3)."""
+        self.conn.execute(
+            "INSERT INTO downloads (file_name, target_path, source_url, size_bytes, "
+            "state, suspicious, start_ts_utc, end_ts_utc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (file_name, target_path, source_url, size_bytes, state, int(suspicious),
+             start_ts_utc.isoformat() if start_ts_utc else None,
+             end_ts_utc.isoformat() if end_ts_utc else None),
+        )
+        self.conn.commit()
+
+    # TODO: add_recycle_deletion, add_recycle_empty_event.
 
     # --- Lectura ---
     def fetch_process_events(self, since_utc: datetime | None = None) -> list[dict]:
@@ -109,6 +132,43 @@ class StateStore:
             }
             for r in cur.fetchall()
         ]
+
+    def fetch_web_visits(self, since_utc: datetime | None = None) -> list[dict]:
+        """Visitas web (opcionalmente desde since_utc), mas recientes primero."""
+        sql = ("SELECT url, title, domain, category, visit_ts_utc, browser FROM web_visits")
+        params: tuple = ()
+        if since_utc is not None:
+            sql += " WHERE visit_ts_utc >= ?"
+            params = (since_utc.isoformat(),)
+        sql += " ORDER BY visit_ts_utc DESC"
+        return [
+            {
+                "url": r["url"], "title": r["title"], "domain": r["domain"],
+                "category": r["category"], "browser": r["browser"],
+                "visit_ts_utc": datetime.fromisoformat(r["visit_ts_utc"]),
+            }
+            for r in self.conn.execute(sql, params).fetchall()
+        ]
+
+    def fetch_downloads(self, since_utc: datetime | None = None) -> list[dict]:
+        """Descargas (opcionalmente desde since_utc por start_ts_utc), recientes primero."""
+        sql = ("SELECT file_name, target_path, source_url, size_bytes, state, "
+               "suspicious, start_ts_utc, end_ts_utc FROM downloads")
+        params: tuple = ()
+        if since_utc is not None:
+            sql += " WHERE start_ts_utc >= ?"
+            params = (since_utc.isoformat(),)
+        sql += " ORDER BY start_ts_utc DESC"
+        rows = []
+        for r in self.conn.execute(sql, params).fetchall():
+            rows.append({
+                "file_name": r["file_name"], "target_path": r["target_path"],
+                "source_url": r["source_url"], "size_bytes": r["size_bytes"],
+                "state": r["state"], "suspicious": bool(r["suspicious"]),
+                "start_ts_utc": datetime.fromisoformat(r["start_ts_utc"]) if r["start_ts_utc"] else None,
+                "end_ts_utc": datetime.fromisoformat(r["end_ts_utc"]) if r["end_ts_utc"] else None,
+            })
+        return rows
 
     # --- Lectura para el reporte ---
     # TODO: fetch_* por rango de fechas (una jornada o varias pendientes).

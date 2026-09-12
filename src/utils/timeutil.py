@@ -61,3 +61,13 @@ def chrome_time_to_utc(chrome_timestamp: int) -> datetime:
     """
     unix_seconds = chrome_timestamp / 1_000_000 - 11644473600
     return datetime.fromtimestamp(unix_seconds, tz=timezone.utc)
+
+
+def utc_to_chrome_time(dt: datetime) -> int:
+    """Inverso de chrome_time_to_utc: datetime UTC -> timestamp Chrome (microsegundos).
+
+    Util para filtrar por fecha directamente en la consulta SQL del History.
+    """
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return int((dt.timestamp() + 11644473600) * 1_000_000)
